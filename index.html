@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dartini POS — Digital Kasir</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes click-pop { 0% { transform: scale(1); } 50% { transform: scale(0.92); border-color: #10b981; } 100% { transform: scale(1); } }
+        .animate-click { animation: click-pop 0.3s ease-out; }
+        .success-glow { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); border-color: #10b981 !important; }
+        .cart-drawer { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); }
+        .cart-drawer.active { transform: translateY(0); }
+        @media (max-width: 1023px) {
+            .cart-drawer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 70; height: 85vh; padding-bottom: 80px; }
+        }
+        @media (min-width: 1024px) { .cart-drawer { transform: none !important; position: static; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+
+    <audio id="sndClick" src="assets/audio/click.mp3" preload="auto"></audio>
+    <audio id="sndSuccess" src="assets/audio/success.mp3" preload="auto"></audio>
+    <audio id="sndDelete" src="assets/audio/delete.mp3" preload="auto"></audio>
+
+    <header class="lg:hidden bg-white p-4 flex justify-between items-center border-b sticky top-0 z-50 shadow-sm">
+        <h1 class="font-black text-emerald-600 tracking-tight text-xl">Bu Dartini POS</h1>
+        <button onclick="toggleCart()" class="relative p-2 bg-emerald-50 rounded-xl active:scale-90 transition-transform">
+            <i data-lucide="shopping-cart" class="text-emerald-600 w-6 h-6"></i>
+            <span id="cartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white font-bold">0</span>
+        </button>
+    </header>
+
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-3 flex justify-around items-center z-[60] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-emerald-600 border-t-2 border-emerald-600 pt-1">
+            <i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-bold uppercase">Menu</span>
+        </a>
+        <a href="laporan.html" class="flex flex-col items-center gap-1 text-slate-400"><i data-lucide="bar-chart-3" class="w-6 h-6"></i><span class="text-[10px] font-bold uppercase">Laba</span></a>
+        <a href="backup.html" class="flex flex-col items-center gap-1 text-slate-400"><i data-lucide="database" class="w-6 h-6"></i><span class="text-[10px] font-bold uppercase">Data</span></a>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <nav class="hidden lg:flex w-24 bg-white border-r flex-col items-center py-8 gap-10 sticky top-0 h-screen">
+            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><i data-lucide="store"></i></div>
+            <div class="flex flex-col gap-8">
+                <a href="index.html" class="p-4 bg-emerald-50 text-emerald-600 rounded-2xl shadow-sm"><i data-lucide="layout-grid"></i></a>
+                <a href="laporan.html" class="p-4 text-slate-300 hover:text-emerald-500"><i data-lucide="bar-chart-3"></i></a>
+                <a href="backup.html" class="p-4 text-slate-300 hover:text-emerald-500"><i data-lucide="database"></i></a>
+            </div>
+        </nav>
+
+        <main class="flex-grow p-4 lg:p-8 pb-32 lg:pb-8 overflow-y-auto no-scrollbar">
+            <div class="max-w-5xl mx-auto">
+                <header class="mb-8 hidden lg:block">
+                    <h1 class="text-3xl font-black tracking-tight text-slate-900">Katalog Menu</h1>
+                    <p class="text-slate-500 font-medium italic">Klik item untuk menambah pesanan.</p>
+                </header>
+
+                <div class="mb-6 relative">
+                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                    <input type="text" id="searchInput" onkeyup="renderCatalog(this.value)" placeholder="Cari menu..." class="w-full bg-white border-none shadow-sm rounded-2xl px-12 py-4 focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div id="productGrid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+            </div>
+        </main>
+
+        <aside id="cartDrawer" class="cart-drawer bg-white border-l shadow-2xl lg:shadow-none lg:w-[420px] flex flex-col rounded-t-[2.5rem] lg:rounded-none">
+            <div class="p-6 border-b flex justify-between items-center">
+                <div><h2 class="font-bold text-xl text-slate-800 tracking-tight">Detail Pesanan</h2><p class="text-xs text-slate-400">Warung Bu Dartini</p></div>
+                <button onclick="toggleCart()" class="lg:hidden p-2 bg-slate-100 rounded-full text-slate-500"><i data-lucide="chevron-down"></i></button>
+            </div>
+            
+            <div class="px-6 py-4 border-b">
+                <div class="relative">
+                    <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="customerName" placeholder="Nama Pembeli (Opsional)" class="w-full pl-11 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                </div>
+            </div>
+
+            <div id="cartItems" class="flex-grow overflow-y-auto p-6 space-y-4 no-scrollbar"></div>
+
+            <div class="p-6 bg-slate-50 border-t space-y-4">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-slate-400 text-sm font-bold uppercase">Total Bayar</span>
+                    <span id="totalDisplay" class="font-black text-3xl text-emerald-600 tracking-tighter">Rp 0</span>
+                </div>
+                <button onclick="showCheckoutModal()" class="w-full bg-emerald-600 text-white py-5 rounded-[1.5rem] font-bold shadow-lg hover:bg-emerald-700 active:scale-95 transition-all text-lg">Selesaikan Transaksi</button>
+            </div>
+        </aside>
+    </div>
+
+    <div id="modalEdit" class="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6 flex items-center gap-2"><i data-lucide="edit-3" class="text-amber-500"></i> Update Produk</h3>
+            <input type="hidden" id="editId">
+            <div class="space-y-4">
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Modal (HPP)</label><input type="number" id="editHpp" class="w-full bg-slate-100 border-none rounded-2xl px-5 py-4 font-bold outline-none"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Harga Jual</label><input type="number" id="editHarga" class="w-full bg-slate-100 border-none rounded-2xl px-5 py-4 font-bold outline-none"></div>
+            </div>
+            <div class="flex gap-3 mt-8"><button onclick="closeEditModal()" class="flex-1 py-4 text-slate-400 font-bold">Batal</button><button onclick="saveProductUpdate()" class="flex-1 bg-slate-900 text-white py-4 rounded-[1.5rem] font-bold">Simpan</button></div>
+        </div>
+    </div>
+
+    <script src="js/database.js"></script><script src="js/ui.js"></script><script src="js/cart.js"></script>
+    <script>window.onload = () => { lucide.createIcons(); renderCatalog(); updateCartUI(); }; function toggleCart() { document.getElementById('cartDrawer').classList.toggle('active'); }</script>
+</body>
+</html>

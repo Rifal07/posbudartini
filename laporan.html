@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Laporan Cuan — Bu Dartini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* Kontainer Tabel agar Sticky Header Berjalan */
+        .table-scroll { height: 500px; overflow-y: auto; }
+        thead th { position: sticky; top: 0; z-index: 10; background: #f8fafc; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-3 flex justify-around items-center z-[60] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="layout-grid" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold">MENU</span>
+        </a>
+        <a href="laporan.html" class="flex flex-col items-center gap-1 text-emerald-600 border-t-2 border-emerald-600 pt-1">
+            <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold">LABA</span>
+        </a>
+        <a href="backup.html" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="database" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold">DATA</span>
+        </a>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <nav class="hidden lg:flex w-24 bg-white border-r flex-col items-center py-8 gap-10 sticky top-0 h-screen">
+            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                <i data-lucide="store"></i>
+            </div>
+            <div class="flex flex-col gap-8">
+                <a href="index.html" class="p-4 text-slate-300 hover:text-emerald-500 transition-all">
+                    <i data-lucide="layout-grid"></i>
+                </a>
+                <a href="laporan.html" class="p-4 bg-emerald-50 text-emerald-600 rounded-2xl shadow-sm">
+                    <i data-lucide="bar-chart-3"></i>
+                </a>
+                <a href="backup.html" class="p-4 text-slate-300 hover:text-emerald-500 transition-all">
+                    <i data-lucide="database"></i>
+                </a>
+            </div>
+        </nav>
+
+        <main class="flex-grow p-4 lg:p-8 pb-32 lg:pb-8 overflow-y-auto no-scrollbar">
+            <div class="max-w-6xl mx-auto">
+                <header class="mb-8">
+                    <h1 class="text-3xl font-black tracking-tight text-slate-900">Analisis Keuntungan</h1>
+                    <p class="text-slate-500 font-medium italic">"Berapa cuan Bu Dartini hari ini?"</p>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 text-center md:text-left">
+                    <div class="bg-white p-7 rounded-[2.5rem] shadow-sm border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Omzet</p>
+                        <h2 id="totalRevenue" class="text-2xl font-black text-slate-800 tracking-tighter">Rp 0</h2>
+                    </div>
+                    <div class="bg-emerald-600 p-7 rounded-[2.5rem] shadow-2xl shadow-emerald-100 text-white transform hover:scale-105 transition-transform">
+                        <p class="text-[10px] font-bold text-emerald-100 uppercase tracking-widest mb-1">Laba Bersih (Cuan)</p>
+                        <h2 id="totalProfit" class="text-2xl font-black tracking-tighter">Rp 0</h2>
+                    </div>
+                    <div class="bg-white p-7 rounded-[2.5rem] shadow-sm border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Transaksi</p>
+                        <h2 id="totalTrx" class="text-2xl font-black text-slate-800 tracking-tighter">0</h2>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                    <div class="bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 h-[400px] flex flex-col">
+                        <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2 text-sm uppercase tracking-widest">
+                            <i data-lucide="calendar" class="text-emerald-500 w-4 h-4"></i> Tren 7 Hari Terakhir
+                        </h3>
+                        <div class="flex-grow"><canvas id="salesChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 h-[400px] flex flex-col">
+                        <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2 text-sm uppercase tracking-widest">
+                            <i data-lucide="award" class="text-amber-500 w-4 h-4"></i> Produk Paling Laku
+                        </h3>
+                        <div class="flex-grow"><canvas id="productChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                    <div class="p-8 border-b bg-white flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-slate-800">Riwayat Transaksi Terbaru</h3>
+                        <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-4 py-1.5 rounded-full uppercase tracking-widest">20 Data Terakhir</span>
+                    </div>
+                    <div class="table-scroll no-scrollbar">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-8 py-4">Waktu</th>
+                                    <th class="px-8 py-4">Pelanggan</th>
+                                    <th class="px-8 py-4 text-right">Total Jual</th>
+                                    <th class="px-8 py-4 text-right text-emerald-600">Laba (Cuan)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionTable" class="divide-y divide-slate-50">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/report.js"></script>
+    <script>
+        window.onload = () => { 
+            lucide.createIcons(); 
+            initReport(); 
+        };
+    </script>
+</body>
+</html>

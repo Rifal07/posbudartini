@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Data & Sinkronisasi — Bu Dartini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-3 flex justify-around items-center z-[60] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="layout-grid" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Menu</span>
+        </a>
+        <a href="laporan.html" class="flex flex-col items-center gap-1 text-slate-400">
+            <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Laba</span>
+        </a>
+        <a href="backup.html" class="flex flex-col items-center gap-1 text-emerald-600 border-t-2 border-emerald-600 pt-1">
+            <i data-lucide="database" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Data</span>
+        </a>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <nav class="hidden lg:flex w-24 bg-white border-r flex-col items-center py-8 gap-10 sticky top-0 h-screen">
+            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><i data-lucide="store"></i></div>
+            <div class="flex flex-col gap-8">
+                <a href="index.html" class="p-4 text-slate-300 hover:text-emerald-500 transition-all"><i data-lucide="layout-grid"></i></a>
+                <a href="laporan.html" class="p-4 text-slate-300 hover:text-emerald-500 transition-all"><i data-lucide="bar-chart-3"></i></a>
+                <a href="backup.html" class="p-4 bg-emerald-50 text-emerald-600 rounded-2xl shadow-sm"><i data-lucide="database"></i></a>
+            </div>
+        </nav>
+
+        <main class="flex-grow p-4 lg:p-8 pb-32 lg:pb-8 overflow-y-auto no-scrollbar">
+            <div class="max-w-xl mx-auto">
+                <header class="mb-10 text-center lg:text-left">
+                    <h1 class="text-3xl font-black tracking-tight text-slate-900">Sinkronisasi Data</h1>
+                    <p class="text-slate-500 font-medium">Gabungkan laba dari HP lain ke HP Utama.</p>
+                </header>
+
+                <div class="bg-white p-8 rounded-[2.5rem] border border-emerald-100 shadow-sm mb-8">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100"><i data-lucide="refresh-cw"></i></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Laporan Hari Ini</h3>
+                            <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Kirim & Tambah Transaksi</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <button onclick="shareTodayTrx()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-emerald-700 active:scale-95 transition-all shadow-lg shadow-emerald-100">
+                            <i data-lucide="send" class="w-5 h-5"></i> Kirim Laba Hari Ini ke WA
+                        </button>
+
+                        <div class="relative py-2 flex items-center justify-center">
+                            <span class="absolute w-full h-[1px] bg-slate-100"></span>
+                            <span class="relative bg-white px-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">Terima Data</span>
+                        </div>
+
+                        <textarea id="tokenInput" rows="3" placeholder="Tempel (Paste) token dari WA di sini..." 
+                            class="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 text-[10px] font-mono outline-none focus:border-emerald-500 focus:bg-white transition-all"></textarea>
+                        
+                        <button onclick="mergeFromToken()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold active:scale-95 transition-all">
+                            Tambahkan ke Laporan Utama
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl">
+                    <div class="flex items-center gap-4 mb-6 text-slate-400">
+                        <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center"><i data-lucide="file-json"></i></div>
+                        <div>
+                            <h3 class="font-bold text-lg text-white">Full Backup JSON</h3>
+                            <p class="text-[10px] uppercase tracking-widest">Gunakan untuk Pindah Seluruh Data</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="exportFullData()" class="w-full bg-white/10 hover:bg-white/20 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all">
+                            <i data-lucide="download"></i> Download Full Backup
+                        </button>
+                        
+                        <label class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 cursor-pointer transition-all border border-slate-700">
+                            <i data-lucide="upload"></i> Restore (Timpa Semua)
+                            <input type="file" id="importFile" class="hidden" onchange="importFullData(event)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script>
+        // --- LOGIKA TOKEN WHATSAPP (MERGE MODE) ---
+        
+        function shareTodayTrx() {
+            const allTrx = DB.get(DB.KEYS.TRANSACTIONS);
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Ambil hanya transaksi yang terjadi hari ini
+            const todayTrx = allTrx.filter(t => t.date.startsWith(today));
+
+            if (todayTrx.length === 0) {
+                return Swal.fire('Kosong', 'Belum ada transaksi hari ini.', 'info');
+            }
+
+            const data = {
+                type: 'SYNC_DAILY_MERGE',
+                transactions: todayTrx,
+                date: today
+            };
+            
+            // Encode token biar aman dikirim di chat
+            const token = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+            const message = `*TOKEN SYNC BU DARTINI*%0ATanggal: ${today}%0ATotal: ${todayTrx.length} Trx%0A%0A${token}`;
+            
+            window.open(`https://wa.me/?text=${message}`, '_blank');
+        }
+
+        function mergeFromToken() {
+            const token = document.getElementById('tokenInput').value.trim();
+            if(!token) return Swal.fire('Kosong', 'Paste tokennya dulu, Bos!', 'warning');
+
+            try {
+                const incoming = JSON.parse(decodeURIComponent(escape(atob(token))));
+                
+                if (incoming.type !== 'SYNC_DAILY_MERGE') {
+                    throw new Error('Tipe token salah');
+                }
+
+                let currentTrx = DB.get(DB.KEYS.TRANSACTIONS);
+                let currentProducts = DB.get(DB.KEYS.PRODUCTS);
+                let addedCount = 0;
+
+                incoming.transactions.forEach(newTrx => {
+                    // CEK DUPLIKAT: Jangan tambah jika ID transaksi sudah ada
+                    const isExist = currentTrx.find(t => t.id === newTrx.id);
+                    
+                    if (!isExist) {
+                        currentTrx.push(newTrx);
+                        addedCount++;
+                        
+                        // KURANGI STOK DI HP UTAMA secara otomatis
+                        newTrx.items.forEach(item => {
+                            const p = currentProducts.find(prod => prod.id === item.id);
+                            if (p) p.stok -= item.qty;
+                        });
+                    }
+                });
+
+                if (addedCount > 0) {
+                    DB.save(DB.KEYS.TRANSACTIONS, currentTrx);
+                    DB.save(DB.KEYS.PRODUCTS, currentProducts);
+                    Swal.fire('Sinkronisasi Berhasil!', `${addedCount} transaksi baru ditambahkan ke laporan utama.`, 'success')
+                        .then(() => location.reload());
+                } else {
+                    Swal.fire('Data Sudah Ada', 'Semua transaksi dalam token ini sudah tercatat sebelumnya.', 'info');
+                }
+
+            } catch(e) {
+                Swal.fire('Token Gagal', 'Token tidak valid atau sudah rusak.', 'error');
+            }
+        }
+
+        // --- LOGIKA FULL BACKUP (REPLACE MODE) ---
+
+        function exportFullData() {
+            const data = { products: DB.get(DB.KEYS.PRODUCTS), transactions: DB.get(DB.KEYS.TRANSACTIONS) };
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `full-backup-dartini-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        function importFullData(e) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const data = JSON.parse(event.target.result);
+                Swal.fire({
+                    title: 'Peringatan!',
+                    text: 'Ini akan MENGHAPUS seluruh data lama di HP ini dan menggantinya dengan data dari file. Lanjutkan?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Timpa Semua!',
+                    confirmButtonColor: '#ef4444'
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        DB.save(DB.KEYS.PRODUCTS, data.products);
+                        DB.save(DB.KEYS.TRANSACTIONS, data.transactions);
+                        location.reload();
+                    }
+                });
+            };
+            reader.readAsText(e.target.files[0]);
+        }
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
